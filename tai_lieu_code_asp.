@@ -1,0 +1,465 @@
+--- Tài liệu code ASP.net
+
+
+- kết nối database: nhấp chuột phải vào Models. chọn add --> new item-> phần data-> chon ADO.NEt entitity data Model --> chon È designer from 
+
+
+- nhấp chuột phải vào controler-> chọn add-> MVC5 controler with view, using enitity framework 
+
+
+-********Thêm ảnh và hiện thị:  trong database: có thuộc tính "anh"
+
+
+
++ controler phần có ảnh: thêm: dưới phần create rỗng 
+ [ValidateInput(false)]
+        public ActionResult Create(HttpPostedFileBase anh, sanpham sanpham)
+        {
+            if (anh != null)
+            {
+                string path = Path.Combine(Server.MapPath("~/Anh"), Path.GetFileName(anh.FileName));
+                anh.SaveAs(path);
+                sanpham.anh = anh.FileName;
+            }
+            
+         * chú ý : thêm thư viện using System.IO 
+         
++ phần create: thay thế :
+
+@using (Html.BeginForm("Create", "sanphams", FormMethod.Post, new { enctype = "multipart/form-data" }))    --- vào phần @using (Html.BeginForm()
+
++ kéo xuống tiếp cũng trong phần create:thêm @type="file"
+
+ví dụ:
+
+ @Html.EditorFor(model => model.anh, new { htmlAttributes = new { @class = "form-control", @type = "file" } })
+ 
+ 
+ + trong phần Index:
+ thay thế: @Html.DisplayFor(modelItem=> item.anh)  
+ thành:  <img src="~/Anh/@item.anh" width="200px" />
+ 
+ *chú ý: sau foreach
+ 
+ 
+ + nhấp chuột phải vào dự án thêm thư mục:" Anh "
+ 
+ 
+ 
+ ----- *******tìm kiếm: Ví dụ:
+ 
+ +trên phần controler: phần 
+ 
+  public ActionResult Index(string SearchString)
+        {
+
+            var sanphams = from s in db.sanphams.Include(s => s.danhmucsanpham)
+                           select s;
+            if (!String.IsNullOrEmpty(SearchString))
+            {
+                sanphams = sanphams.Where(s => s.tensanpham.Contains(SearchString));
+
+            }
+            return View(sanphams);
+            //var sanphams = db.sanphams.Include(s => s.danhmucsanpham);
+            // return View(sanphams.ToList());
+        }
+        // public ActionResult Index()
+        //{
+        //  var sanphams = db.sanphams.Include(s => s.danhmucsanpham);
+        //return View(sanphams.ToList());
+        //}
+        
+  + Trong phần view :  
+  
+  thêm: 
+  <style>
+
+    .table tr th {
+        background-color: yellow;
+        border: 2px black solid
+    }
+
+    .table tr td {
+        border: 2px black solid
+    }
+</style>
+
+<h2 style="text-align:center">Danh Sách Sản Phẩm</h2>
+
+<p style="text-align:center">
+    <button>   @Html.ActionLink("Thêm Sản Phẩm", "Create")</button>
+</p>
+@using (Html.BeginForm("Index", "tintucs", FormMethod.Get))
+{
+    <p style="text-align:center">
+        Nhập Tên Tìm kiếm: @Html.TextBox("SearchString")
+        <input type="submit" value="Tìm Kiếm" />
+    </p>
+}
+
+
+* chú ý: phần @Html.TextBox("SearchString)  phải giống với phần trên Controler 
+
+
+
+
+----********* Trang login:
+ ví dụ:
+ 
+ 
+ using storelaptop.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace storelaptop.Controllers
+{
+    public class HomeController : Controller
+    {
+        private quantriEntities db = new quantriEntities();
+        public ActionResult Index()
+        {
+            if (Session["user_name"] == null)
+            {
+                return RedirectToAction("Login");
+            }
+            return View(db.sanphams.ToList());
+            //return View();
+        }
+
+        public ActionResult About()
+        {
+            ViewBag.Message = "Your application description page.";
+
+            return View();
+        }
+
+        public ActionResult Contact()
+        {
+            ViewBag.Message = "Your contact page.";
+
+            return View();
+        }
+        public ActionResult Login()
+        {
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Login(string user_name, string pass_word)
+        {
+            if (user_name != null)
+            {
+                var usr = db.user_table
+                    .Where(m => m.user_name.Equals(user_name))
+                    .Where(m => m.pass_word.Equals(pass_word))
+                    .FirstOrDefault();
+                if (usr != null)
+                {
+                    ViewBag.h = "chua nhap tai khoan";
+                    Session["user_name"] = usr.user_name;
+                    Session["full_name"] = usr.full_name;
+                    return RedirectToAction("Index");
+                }
+
+            }
+            return View();
+
+        }
+        public ActionResult Logout()
+        {
+            Session["user_name"] = null;
+            Session["full_name"] = null;
+            return RedirectToAction("Login");
+        }
+    }
+} 
+
+
+* chú ý : thêm: 
+
+if (Session["user_name"] == null)
+            {
+                return RedirectToAction("Login");
+            }
+            return View(db.sanphams.ToList());
+        
+        ---- trong phần Index
+        
++ thêm:
+ public ActionResult Login()
+        {
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Login(string user_name, string pass_word)
+        {
+            if (user_name != null)
+            {
+                var usr = db.user_table
+                    .Where(m => m.user_name.Equals(user_name))
+                    .Where(m => m.pass_word.Equals(pass_word))
+                    .FirstOrDefault();
+                if (usr != null)
+                {
+                    ViewBag.h = "chua nhap tai khoan";
+                    Session["user_name"] = usr.user_name;
+                    Session["full_name"] = usr.full_name;
+                    return RedirectToAction("Index");
+                }
+
+            }
+            return View();
+
+        }
+        public ActionResult Logout()
+        {
+            Session["user_name"] = null;
+            Session["full_name"] = null;
+            return RedirectToAction("Login");
+        }
+        ---- sau phần Contact
+        
+ - nhấp chuột phải-> chọn add view:
+ + thêm:
+ ví dụ: 
+ 
+ 
+@{
+    ViewBag.Title = "Login";
+    Layout = null;
+}
+/*
+<style>
+    * {
+        background-color: transparent;
+        padding: 0px;
+        margin: 0px;
+        font-family: sans-serif;
+        box-sizing: border-box;
+    }
+
+    header {
+        background-color: #cccccc;
+        min-height: 70px;
+        padding: 15px;
+    }
+
+    main {
+        min-height: 300px;
+        padding: 7.5px 15px;
+    }
+
+    footer {
+        background-color: #cccccc;
+        min-height: 70px;
+        padding: 15px;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 250px;
+    }
+
+    .login-form {
+        width: 100%;
+        max-width: 400px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        padding: 15px;
+        border: 2px dotted #cccccc;
+        border-radius: 10px;
+    }
+
+    h1 {
+        color: #009999;
+        font-size: 20px;
+        margin-bottom: 30px;
+    }
+
+    .input-box {
+        margin-bottom: 10px;
+    }
+
+        .input-box input {
+            padding: 7.5px 15px;
+            width: 100%;
+            border: 1px solid #cccccc;
+            outline: none;
+        }
+
+    .btn-box {
+        text-align: right;
+        margin-top: 30px;
+    }
+
+        .btn-box button {
+            padding: 7.5px 15px;
+            border-radius: 2px;
+            background-color: #009999;
+            color: #ffffff;
+            border: none;
+            outline: none;
+        }
+</style>
+
+
+
+
+@using (Html.BeginForm())
+{
+    <main>
+        <div class="container">
+            <div class="login-form">
+                <form action="" method="post">
+                    <h1 style="text-align:center">Đăng nhập vào website</h1>
+                    <div class="input-box">
+                        <i></i>
+                        <input type="text" name="user_name" placeholder="Nhập username">
+                    </div>
+                    <div class="input-box">
+                        <i></i>
+                        <input type="password" name="pass_word" placeholder="Nhập mật khẩu">
+                    </div>
+                    <div class="btn-box">
+                        <button type="submit">
+                            Đăng nhập
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+    /* <div class="row">
+         @ViewBag.h
+
+         <div class="col-lg-4">Tên đăng nhập</div>
+         <div class="col-lg-8"><input type="text" name="user_name" placeholder="ten dang nhap" /></div>
+     </div>
+     <div class="row">
+         <div class="col-lg-4">Mật khẩu</div>
+         <div class="col-lg-8"><input type="password" name="pass_word" placeholder="mat khau" /></div>
+     </div>
+     <div class="row">
+         <div class="col-lg-4">&nbsp</div>
+         <div class="col-lg-8"><input type="submit" name="Login" value="Login" /></div>
+     </div>*/
+
+}
+
+
+
+**** Tải template trang quản trị admin:   sbadmin2, sbadmin.
+
+
+******    tích hợp ckfinder, ckeditor . tải trên trang: cksource.com/ckfinder(ckfinder 2.6.1, ckeditor tùy ý)
+
+
+-- copy thư mục ckfinder: vào phần content hoặc vào thư mục nào trong dự án tùy ý và xóa đi 2 thư mục: _samples và _source
+
+-nhấp chuột phải vào referrence-> chọn add reference ->chọn phần brower-> chọn thư mục ckfinfer ->bin-> add CKfinder.dll , Ckfinder_fileEditor.dll, CKFinder_ImageResize.dll, CkFinder_Watermark.pdb
+
+-- copy thư mục editor vào thư mục content hoặc vào thư mục nào trong dự án tùy ý
+
+
+--Phần Create---- thêm đoạn code trước phần @using (Html.beginForm) 
+
+<script src="~/Content/ckeditor/ckeditor.js"></script>
+<script src="~/Content/ckfinder/ckfinder.js"></script>
+<script type="text/javascript">
+    function BrowseServer() {
+        var finder = new CKFinder();
+        //finder.basePath = '../';
+        finder.selectActionFunction = SetFileField;
+        finder.popup();
+    }
+    function SetFileField(fileUrl) {
+        document.getElementById('anh').value = fileUrl;
+    }
+</script>
+
+
+*chú ý :<script src="~/Content/ckeditor/ckeditor.js"></script>:  bấm vào thư mục ckfinder-> tìm đến phần ckfinder.js  -> rồi kéo 
+
+        --cũng ở phần Create:
+        
+ <div class="form-group">
+            @Html.LabelFor(model => model.mota, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.TextAreaFor(model => model.mota, new { htmlAttributes = new { @class = "form-control" }, @id = "mota" })
+                @Html.ValidationMessageFor(model => model.mota, "", new { @class = "text-danger" })
+                <script>
+                    CKEDITOR.replace("mota",
+                        {
+                            filebrowserBrowseUrl: '/content/ckfinder/ckfinder.html',
+                            filebrowserImageBrowseUrl: '/content/ckfinder/ckfinder.html?type=Images',
+                            filebrowserFlashBrowseUrl: '/content/ckfinder/ckfinder.html?type=Flash',
+                            filebrowserUploadUrl: '/content/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+                            filebrowserImageUploadUrl: '/content/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+                            filebrowserFlashUploadUrl: '/content/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash'
+                        });</script>
+            </div>
+        </div>
+        
+        
+ * chú ý : thay đổi chỗ cần thay thế CKEDITOR : Phần @html.EditorFor thành @Html.TextAreaFor  và sau { @class ="form-control"},@id= "mota" })   -- sau dấu ngoặc nhọn thêm @id="mota" 
+ 
+ + dưới phần  ValidationMessageFor  
+ <script>
+                    CKEDITOR.replace("mota",
+                        {
+                            filebrowserBrowseUrl: '/content/ckfinder/ckfinder.html',
+                            filebrowserImageBrowseUrl: '/content/ckfinder/ckfinder.html?type=Images',
+                            filebrowserFlashBrowseUrl: '/content/ckfinder/ckfinder.html?type=Flash',
+                            filebrowserUploadUrl: '/content/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Files',
+                            filebrowserImageUploadUrl: '/content/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Images',
+                            filebrowserFlashUploadUrl: '/content/ckfinder/core/connector/php/connector.php?command=QuickUpload&type=Flash'
+                        });</script>    
+        
+        
+   
+  ---- trong phần ckfinder -> tìm file: config.ascx rồi cấu hình như sau:
+  
+  public override bool CheckAuthentication()
+	{
+		// WARNING : DO NOT simply return "true". By doing so, you are allowing
+		// "anyone" to upload and list the files in your server. You must implement
+		// some kind of session validation here. Even something very simple as...
+		//
+		//		return ( Session[ "IsAuthorized" ] != null && (bool)Session[ "IsAuthorized" ] == true );
+		//
+		// ... where Session[ "IsAuthorized" ] is set to "true" as soon as the
+		// user logs on your system.
+
+		return true;
+	}
+	
+* chú ý: trong phần CheckAuthentication : return false chuyển thành return true
+
++ trong phần : public override void SetConfig()    --sửa 2 file 
+
++ phần LicenseName và Licenkey có thể ấy trên mạng  
+
++ BaseUrl = "/Anh/";    -- có thể sửa thư mục Anh thành thư mục khác. vì trong dự án mình thêm thư mục Anh để chưa ẢNh  
+
++ BaseDir = HttpContext.Current.Server.MapPath("~/Anh/");	--- tương tự có thể thay thư mục ảnh thành thư mục khác chứa Ảnh do mình tạo 
+
+
+-- trong phần View:  sau foreach :
+
+
+thay thế:  @Html.DisplayFor(modelItem => item.mota) thành @Html.Raw(item.mota)
+	
+ * chú ý : thay  thành @Html.Raw(item.mota)   để có thể hiển thị ảnh thay vì tên
+ 
+ 
+ 
+  
+  
+        
+
